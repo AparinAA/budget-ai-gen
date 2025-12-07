@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
+import { getRedisClient } from "@/shared/redis";
 
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
-// Серверный кэш курсов валют
-const ratesCache = new Map();
+const CACHE_TTL = 60 * 60; // 1 hour in seconds
 
 // Дефолтные курсы валют к EUR
 const DEFAULT_RATES = {
@@ -30,10 +28,17 @@ export async function GET(request) {
 			return NextResponse.json({ rate: 1 });
 		}
 
-		// Проверяем серверный кэш
-		const cached = ratesCache.get(from);
-		if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-			return NextResponse.json({ rate: cached.rate });
+		const cacheKey = `exchange_rate:${from}:EUR`;
+
+		// Проверяем Redis кэш
+		try {
+			const redis = await getRedisClient();
+			const cached = await redis.get(cacheKey);
+			if (cached) {
+				return NextResponse.json({ rate: parseFloat(cached) });
+			}
+		} catch (redisError) {
+			console.error("Redis error:", redisError);
 		}
 
 		// Всегда конвертируем from -> EUR
@@ -55,8 +60,13 @@ export async function GET(request) {
 		const result = await response.json();
 		const rate = result[0].rate;
 
-		// Сохраняем в серверный кэш
-		ratesCache.set(from, { rate, timestamp: Date.now() });
+		// Сохраняем в Redis кэш
+		try {
+			const redis = await getRedisClient();
+			await redis.setEx(cacheKey, CACHE_TTL, rate.toString());
+		} catch (redisError) {
+			console.error("Redis error:", redisError);
+		}
 
 		return NextResponse.json({ rate });
 	} catch (error) {
