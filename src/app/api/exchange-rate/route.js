@@ -38,7 +38,7 @@ export async function GET(request) {
 
 		// Всегда конвертируем from -> EUR
 		const response = await fetch(
-			`https://www.xe.com/api/protected/statistics/?from=${from}&to=EUR`,
+			`https://www.xe.com/api/protected/live-currency-pairs-rates/?currencyPairs=${from}%2FEUR`,
 			{
 				headers: {
 					accept: "*/*",
@@ -53,7 +53,7 @@ export async function GET(request) {
 		}
 
 		const result = await response.json();
-		const rate = result.last1Days.average;
+		const rate = result[0].rate;
 
 		// Сохраняем в серверный кэш
 		ratesCache.set(from, { rate, timestamp: Date.now() });
