@@ -112,6 +112,7 @@ export function ExpenseModal({
 					ownerId: ownerId || null,
 				});
 				setSnapshot(snap);
+				window.dispatchEvent(new Event("refresh-savings"));
 				setAmount("");
 				onClose();
 			} finally {

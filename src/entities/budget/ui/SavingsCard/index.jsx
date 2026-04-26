@@ -46,13 +46,24 @@ function formatCurrencyTotals(totals, fallbackAmount, fallbackCurrencyCode) {
 			: fallbackTotals;
 
 	return currencies
-		.map((item) =>
-			currency(
-				(Number(item.amount) || 0) / 100,
+		.map((item, index) => {
+			const amount = Number(item.amount) || 0;
+			const formatted = currency(
+				Math.abs(amount) / 100,
 				item.currencyCode || fallbackCurrencyCode
-			)
-		)
-		.join(" + ");
+			);
+			if (index === 0) return amount < 0 ? `-${formatted}` : formatted;
+			return `${amount < 0 ? "-" : "+"} ${formatted}`;
+		})
+		.join(" ");
+}
+
+function getSavingsAmountColor(amount) {
+	return Number(amount) < 0 ? "#ff8a8a" : "#e6edf3";
+}
+
+function getSavingsMovementLabel(row) {
+	return Number(row?.amount) < 0 ? "списание" : "пополнение";
 }
 
 export function SavingsCard({ currencyCode, onAfterRecalculate }) {
@@ -123,7 +134,7 @@ export function SavingsCard({ currencyCode, onAfterRecalculate }) {
 					<thead>
 						<tr className={kit.tableHead}>
 							<th className={kit.theadTh}>Категория</th>
-							<th className={kit.theadTh}>Общая сумма</th>
+							<th className={kit.theadTh}>Баланс</th>
 							<th className={kit.theadTh}>Записей</th>
 						</tr>
 					</thead>
@@ -173,11 +184,19 @@ export function SavingsCard({ currencyCode, onAfterRecalculate }) {
 												</button>
 											</td>
 											<td className={kit.td}>
-												{formatCurrencyTotals(
-													row.currencies,
-													row.amount,
-													row.currencyCode || currencyCode
-												)}
+												<strong
+													style={{
+														color: getSavingsAmountColor(
+															row.amount
+														),
+													}}
+												>
+													{formatCurrencyTotals(
+														row.currencies,
+														row.amount,
+														row.currencyCode || currencyCode
+													)}
+												</strong>
 											</td>
 											<td className={kit.td}>
 												{row.transfersCount || 0}
@@ -202,13 +221,20 @@ export function SavingsCard({ currencyCode, onAfterRecalculate }) {
 																	display: "grid",
 																	gap: 12,
 																	gridTemplateColumns:
-																		"minmax(110px, 1fr) minmax(120px, auto) minmax(64px, auto)",
+																		"minmax(110px, 1fr) minmax(120px, auto) 96px",
 																}}
 															>
 																<span>
 																	{formatSavingsMonthLabel(monthRow)}
 																</span>
-																<strong>
+																<strong
+																	style={{
+																		color: getSavingsAmountColor(
+																			monthRow.amount
+																		),
+																		justifySelf: "end",
+																	}}
+																>
 																	{formatCurrencyTotals(
 																		monthRow.currencies,
 																		monthRow.amount,
@@ -216,8 +242,11 @@ export function SavingsCard({ currencyCode, onAfterRecalculate }) {
 																			currencyCode
 																	)}
 																</strong>
-																<span className={kit.muted}>
-																	{monthRow.transfersCount || 0} зап.
+																<span
+																	className={kit.muted}
+																	style={{ textAlign: "left" }}
+																>
+																	{getSavingsMovementLabel(monthRow)}
 																</span>
 															</div>
 														))}

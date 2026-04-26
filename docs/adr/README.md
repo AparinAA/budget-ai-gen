@@ -12,6 +12,7 @@ ADR нужен, когда изменение влияет на архитект
 - [ADR-0001: Зафиксировать текущую архитектуру Family Budget](0001-current-project-architecture.md)
 - [ADR-0002: Правила работы LLM/AI-агентов с проектом](0002-llm-ai-agent-operating-rules.md)
 - [ADR-0003: Агрегировать накопления по названию категории](0003-savings-summary-by-category-name.md)
+- [ADR-0004: Списывать перерасход категории из накоплений](0004-savings-withdrawals-on-category-overspend.md)
 
 ## Формат
 

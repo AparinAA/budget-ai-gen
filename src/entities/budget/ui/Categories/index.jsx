@@ -103,6 +103,7 @@ export function Categories({ onAfterChange }) {
 			.then((snap) => {
 				setSnapshot(snap);
 				setEditingNameId(null);
+				window.dispatchEvent(new Event("refresh-savings"));
 				onAfterChange?.();
 			})
 			.catch(() => {
@@ -132,6 +133,7 @@ export function Categories({ onAfterChange }) {
 					categoryId: null,
 					categoryName: "",
 				});
+				window.dispatchEvent(new Event("refresh-savings"));
 				onAfterChange?.();
 			})
 			.catch(() => {
@@ -324,9 +326,14 @@ export function Categories({ onAfterChange }) {
 												},
 												{ signal: controller.signal }
 											)
-												.then((snap) =>
-													setSnapshot(snap)
-												)
+												.then((snap) => {
+													setSnapshot(snap);
+													window.dispatchEvent(
+														new Event(
+															"refresh-savings"
+														)
+													);
+												})
 												.catch(() => {})
 												.finally(() => {
 													cell.controller = null;

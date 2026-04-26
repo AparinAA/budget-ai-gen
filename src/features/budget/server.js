@@ -86,7 +86,17 @@ export async function setIncome({ year, month, income, ownerId }) {
 	});
 }
 
-// Рассчитать и записать накопления по категориям-сейвингам на месяц
+function getCategoryDisplayName(category) {
+	const name = String(category?.name || "").trim();
+	return name || "Без категории";
+}
+
+function addAmountByCategoryName(totalsByName, category, amount) {
+	const name = getCategoryDisplayName(category);
+	totalsByName.set(name, (totalsByName.get(name) || 0) + amount);
+}
+
+// Рассчитать и записать пополнения и списания накоплений за месяц
 export async function calculateAndUpsertSavings(year, month, ownerId) {
 	const userId = await ensureAccess(ownerId);
 	const budget = await prisma.budget.findUnique({
@@ -133,6 +143,40 @@ export async function calculateAndUpsertSavings(year, month, ownerId) {
 	for (const [k, v] of baseAmounts) finalAmounts.set(k, v);
 	for (const [k, v] of rolloverAdds)
 		finalAmounts.set(k, (finalAmounts.get(k) || 0) + v);
+
+	const budgetCurrencyCode = budget.currencyCode || "RUB";
+	const existingTransfers = await prisma.savingsTransfer.findMany({
+		where: {
+			userId,
+			NOT: { year, month },
+		},
+		include: { category: true },
+	});
+	const availableSavingsByName = new Map();
+	for (const transfer of existingTransfers) {
+		if ((transfer.currencyCode || budgetCurrencyCode) !== budgetCurrencyCode)
+			continue;
+
+		addAmountByCategoryName(
+			availableSavingsByName,
+			transfer.category,
+			Number(transfer.amount) || 0
+		);
+	}
+	for (const c of budget.categories) {
+		if (c.isSaving) continue;
+
+		const allocated = Math.max(0, Number(c.amount) || 0);
+		const spent = spentByCat.get(c.id) || 0;
+		const overspent = Math.max(0, spent - allocated);
+		if (!overspent) continue;
+
+		const availableSavings =
+			availableSavingsByName.get(getCategoryDisplayName(c)) || 0;
+		if (availableSavings <= 0) continue;
+
+		finalAmounts.set(c.id, (finalAmounts.get(c.id) || 0) - overspent);
+	}
 
 	// Удаляем все записи по категориям, которых нет в finalAmounts
 	const keepIds = Array.from(finalAmounts.keys());
