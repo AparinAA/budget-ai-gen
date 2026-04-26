@@ -46,7 +46,7 @@ export async function getOrCreateBudget(year, month, ownerId) {
 	});
 	const defaults = [
 		{
-			name: "Обязательные траты (еда/дом.товары)",
+			name: "Обязательные траты (еда/дом/товары)",
 			amount: 0,
 			sortOrder: 0,
 		},
@@ -58,7 +58,7 @@ export async function getOrCreateBudget(year, month, ownerId) {
 		},
 		{ name: "Путешествия", amount: 0, sortOrder: 3 },
 		{ name: "Аренда", amount: 0, sortOrder: 4 },
-		{ name: "Ивестиции", amount: 0, sortOrder: 5 },
+		{ name: "Инвестиции", amount: 0, sortOrder: 5 },
 	];
 	const result = await prisma.budget.upsert({
 		where: {
