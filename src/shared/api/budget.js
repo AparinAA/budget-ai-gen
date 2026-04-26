@@ -1,3 +1,5 @@
+import { EMPTY_SAVINGS_SUMMARY } from "@/shared/lib/savings";
+
 export async function fetchSnapshot(year, month, signal, ownerId = null) {
 	try {
 	const own = ownerId ? `&ownerId=${encodeURIComponent(ownerId)}` : "";
@@ -78,7 +80,7 @@ export async function fetchSavings(signal, ownerId = null) {
 		throw new Error("Unauthorized");
 	}
 	return (
-		(await r.json().catch(() => null)) || { totalBank: 0, transfers: [] }
+		(await r.json().catch(() => null)) || EMPTY_SAVINGS_SUMMARY
 	);
 }
 

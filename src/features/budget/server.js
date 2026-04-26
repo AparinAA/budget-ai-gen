@@ -2,6 +2,11 @@
 
 import { prisma } from "@/shared/db";
 import { requireUserId } from "@/shared/auth/session";
+import {
+	buildSavingsCategoryTotals,
+	buildSavingsCurrencyTotals,
+	buildSavingsMonthlyTotals,
+} from "@/shared/lib/savings";
 
 // Helpers
 export async function upsertUser() {
@@ -454,5 +459,14 @@ export async function getSavingsSummary(ownerId) {
 		orderBy: [{ year: "desc" }, { month: "desc" }, { createdAt: "desc" }],
 	});
 	const totalBank = transfers.reduce((s, t) => s + t.amount, 0);
-	return { totalBank, transfers };
+	const totalCurrencies = buildSavingsCurrencyTotals(transfers);
+	const monthlyTotals = buildSavingsMonthlyTotals(transfers);
+	const categoryTotals = buildSavingsCategoryTotals(transfers);
+	return {
+		totalBank,
+		totalCurrencies,
+		monthlyTotals,
+		categoryTotals,
+		transfers,
+	};
 }
